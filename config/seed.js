@@ -1,3 +1,9 @@
+const prisma = require('./db');
+await prisma.product.createMany({ data: productsData });
+await prisma.user.create({
+  data: { email: adminEmail, password: hashedPassword, username: 'Admin', isAdmin: true }
+});
+
 const Product = require('../models/Product');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
