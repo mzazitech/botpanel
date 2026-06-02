@@ -2,14 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const prisma = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 
-// Validation rules
 const registerValidation = [
-  body('username').trim().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
-  body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  body('username').trim().isLength({ min: 3 }),
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 6 })
 ];
 
 const loginValidation = [
@@ -17,7 +17,6 @@ const loginValidation = [
   body('password').notEmpty()
 ];
 
-// Generate JWT
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
@@ -32,15 +31,23 @@ router.post('/register', registerValidation, async (req, res) => {
 
     const { username, email, password } = req.body;
 
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    const existingUser = await prisma.user.findFirst({
+      where: { OR: [{ email }, { username }] }
+    });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
-    const user = new User({ username, email, password });
-    await user.save();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword
+      }
+    });
 
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -51,7 +58,7 @@ router.post('/register', registerValidation, async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Registration successful',
-      user: { id: user._id, username: user.username, email: user.email, isAdmin: user.isAdmin }
+      user: { id: user.id, username: user.username, email: user.email, isAdmin: user.isAdmin }
     });
   } catch (error) {
     console.error(error);
@@ -68,16 +75,18 @@ router.post('/login', loginValidation, async (req, res) => {
     }
 
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await prisma.user.findUnique({ where: { email } });
 
-    if (!user || !(await user.comparePassword(password))) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    user.lastLogin = new Date();
-    await user.save();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() }
+    });
 
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -88,7 +97,7 @@ router.post('/login', loginValidation, async (req, res) => {
     res.json({
       success: true,
       message: 'Login successful',
-      user: { id: user._id, username: user.username, email: user.email, isAdmin: user.isAdmin }
+      user: { id: user.id, username: user.username, email: user.email, isAdmin: user.isAdmin }
     });
   } catch (error) {
     console.error(error);
@@ -99,7 +108,7 @@ router.post('/login', loginValidation, async (req, res) => {
 // Logout
 router.post('/logout', (req, res) => {
   res.clearCookie('token');
-  res.json({ success: true, message: 'Logged out successfully' });
+  res.json({ success: true, message: 'Logged out' });
 });
 
 // Get current user
@@ -107,7 +116,7 @@ router.get('/me', authMiddleware, async (req, res) => {
   res.json({
     success: true,
     user: {
-      id: req.user._id,
+      id: req.user.id,
       username: req.user.username,
       email: req.user.email,
       isAdmin: req.user.isAdmin
