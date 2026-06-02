@@ -1,11 +1,4 @@
 const prisma = require('./db');
-await prisma.product.createMany({ data: productsData });
-await prisma.user.create({
-  data: { email: adminEmail, password: hashedPassword, username: 'Admin', isAdmin: true }
-});
-
-const Product = require('../models/Product');
-const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
 const productsData = [
@@ -58,35 +51,31 @@ const productsData = [
 ];
 
 async function seedProducts() {
-  try {
-    const count = await Product.countDocuments();
-    if (count === 0) {
-      await Product.insertMany(productsData);
-      console.log('✅ Products seeded successfully');
-    } else {
-      console.log('📦 Products already exist, skipping seed');
-    }
-  } catch (error) {
-    console.error('Error seeding products:', error);
+  const count = await prisma.product.count();
+  if (count === 0) {
+    await prisma.product.createMany({ data: productsData });
+    console.log('✅ Products seeded successfully');
+  } else {
+    console.log('📦 Products already exist, skipping seed');
   }
 }
 
 async function seedAdmin() {
-  try {
-    const adminExists = await User.findOne({ email: process.env.ADMIN_EMAIL });
-    if (!adminExists) {
-      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
-      await User.create({
+  const adminExists = await prisma.user.findUnique({
+    where: { email: process.env.ADMIN_EMAIL }
+  });
+  if (!adminExists) {
+    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+    await prisma.user.create({
+      data: {
         username: 'Administrator',
         email: process.env.ADMIN_EMAIL,
         password: hashedPassword,
         isAdmin: true,
         emailVerified: true
-      });
-      console.log('✅ Admin user created successfully');
-    }
-  } catch (error) {
-    console.error('Error seeding admin:', error);
+      }
+    });
+    console.log('✅ Admin user created successfully');
   }
 }
 
