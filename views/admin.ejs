@@ -1,0 +1,34 @@
+<%- include('layout', { title: title, user: user }) %>
+<div class="container" style="padding: 2rem 0;" id="adminPanel">
+  <h1>Admin Dashboard</h1>
+  <div class="dashboard-stats">
+    <div class="stat-card"><div class="stat-value" id="totalUsers">0</div><div>Users</div></div>
+    <div class="stat-card"><div class="stat-value" id="totalProducts">0</div><div>Products</div></div>
+    <div class="stat-card"><div class="stat-value" id="totalSales">KES 0</div><div>Sales</div></div>
+    <div class="stat-card"><div class="stat-value" id="totalPurchases">0</div><div>Transactions</div></div>
+  </div>
+  
+  <h2>📊 Recent Purchases</h2>
+  <div style="overflow-x: auto;">
+    <table style="width:100%; border-collapse: collapse;">
+      <thead><tr><th>User</th><th>Product</th><th>Amount</th><th>Date</th></tr></thead>
+      <tbody id="recentPurchases"></tbody>
+    </table>
+  </div>
+  
+  <h2 style="margin-top: 2rem;">👥 Users Management</h2>
+  <div style="overflow-x: auto;">
+    <table style="width:100%; border-collapse: collapse;">
+      <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+      <tbody id="usersTableBody"></tbody>
+    </table>
+  </div>
+  
+  <h2 style="margin-top: 2rem;">🛍️ Products</h2>
+  <div style="overflow-x: auto;">
+    <table style="width:100%; border-collapse: collapse;">
+      <thead><tr><th>Name</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="productsTableBody"></tbody>
+    </table>
+  </div>
+</div>
