@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title><%= title %></title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Additional quick styles */
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+    .hero { min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .hero h1 { font-size: 3.5rem; background: linear-gradient(135deg, #00d4ff, #9d4edd); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .footer { text-align: center; padding: 2rem; border-top: 1px solid rgba(0,212,255,0.2); margin-top: 3rem; }
+  </style>
+</head>
+<body>
+  <div class="cyber-bg"></div>
+  <div class="grid-overlay"></div>
+  
+  <nav class="navbar">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+      <a href="/" style="font-size: 1.5rem; font-weight: bold; text-decoration: none;">
+        <span style="color: #00d4ff;">Mzazi</span><span style="color: #9d4edd;">Tech</span>
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/#products">Products</a>
+        <a href="/faq">FAQ</a>
+        <a href="/contact">Contact</a>
+        <% if (user) { %>
+          <a href="/dashboard">Dashboard</a>
+          <% if (user.isAdmin) { %>
+            <a href="/admin">Admin</a>
+          <% } %>
+          <button id="logoutBtn" class="neon-outline" style="background: transparent; padding: 6px 18px;">Logout</button>
+        <% } else { %>
+          <a href="/login" class="neon-outline" style="padding: 6px 18px;">Login</a>
+          <a href="/register" class="neon-btn" style="padding: 6px 18px;">Register</a>
+        <% } %>
+        <button id="themeToggle" class="theme-toggle" style="background: none; border: none; font-size: 1.2rem;">🌙</button>
+      </div>
+    </div>
+  </nav>
+  
+  <main>
+    <%- body %>
+  </main>
+  
+  <footer class="footer">
+    <div class="container">
+      <p>© 2025 Mzazi Tech Store. All rights reserved.</p>
+      <div style="margin-top: 10px;">
+        <a href="/terms" style="color: #888; margin: 0 10px;">Terms</a>
+        <a href="/privacy" style="color: #888; margin: 0 10px;">Privacy</a>
+      </div>
+    </div>
+  </footer>
+  
+  <script src="/js/main.js"></script>
+  <% if (user) { %>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/admin.js"></script>
+  <% } %>
+</body>
+</html>
