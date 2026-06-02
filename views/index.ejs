@@ -1,0 +1,50 @@
+<%- include('layout', { title: title, user: user }) %>
+<div class="hero">
+  <div class="container">
+    <h1>Premium Digital Products for<br>Modern Entrepreneurs</h1>
+    <p style="font-size: 1.2rem; margin: 20px 0; color: #a0a0b0;">WhatsApp Bots • Pterodactyl Panels • VPS • API Keys</p>
+    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+      <a href="#products" class="neon-btn">Explore Products</a>
+      <a href="/register" class="neon-btn neon-outline">Get Started</a>
+    </div>
+  </div>
+</div>
+
+<section id="products" style="padding: 3rem 0;">
+  <div class="container">
+    <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 30px;">🔥 Our Products</h2>
+    <div style="max-width: 500px; margin: 0 auto 30px;">
+      <input type="text" id="productSearch" placeholder="🔍 Search products..." class="cyber-input">
+    </div>
+    <div class="product-grid" id="productGrid">
+      <% if (products && products.length) { %>
+        <% products.forEach(product => { %>
+          <div class="product-card">
+            <div class="product-icon"><%= product.imageIcon || '📦' %></div>
+            <h3 class="product-title"><%= product.name %></h3>
+            <p class="product-description" style="color: #bbb; margin: 10px 0;"><%= product.description.substring(0, 100) %></p>
+            <div class="product-price">KES <%= product.price %> <span>one-time</span></div>
+            <button class="neon-btn buy-now-btn" data-product-id="<%= product._id %>" style="width: 100%;">Buy Now</button>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p>Loading products...</p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<section style="background: rgba(0,0,0,0.3); padding: 3rem 0;">
+  <div class="container">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; text-align: center;">
+      <div><span style="font-size: 2rem;">⚡</span><h3>Instant Delivery</h3><p>Get API keys instantly after payment</p></div>
+      <div><span style="font-size: 2rem;">🔒</span><h3>Secure Payments</h3><p>Paystack secured transactions</p></div>
+      <div><span style="font-size: 2rem;">💎</span><h3>Premium Support</h3><p>24/7 customer assistance</p></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Make buy now globally accessible
+  window.handleBuyNow = handleBuyNow;
+</script>
