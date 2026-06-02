@@ -1,32 +1,31 @@
 const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
-const Purchase = require('../models/Purchase');
-const Product = require('../models/Product');
+const prisma = require('../config/db');
 
-// Get dashboard data
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const purchases = await Purchase.find({ user: req.user._id, status: 'completed' })
-      .populate('product')
-      .sort({ createdAt: -1 });
-    
-    // Separate active subscriptions and API keys
+    const purchases = await prisma.purchase.findMany({
+      where: { userId: req.user.id, status: 'completed' },
+      include: { product: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
     const activePurchases = purchases.filter(p => {
       if (p.expiryDate) {
         return new Date(p.expiryDate) > new Date();
       }
       return true;
     });
-    
+
     const apiKeys = purchases.filter(p => p.apiKey).map(p => ({
-      id: p._id,
+      id: p.id,
       productName: p.product.name,
       apiKey: p.apiKey,
       expiryDate: p.expiryDate,
       createdAt: p.createdAt
     }));
-    
+
     res.json({
       success: true,
       user: {
@@ -40,7 +39,7 @@ router.get('/', authMiddleware, async (req, res) => {
         totalSpent: purchases.reduce((sum, p) => sum + p.amount, 0)
       },
       purchases: purchases.map(p => ({
-        id: p._id,
+        id: p.id,
         productName: p.product.name,
         productIcon: p.product.imageIcon,
         amount: p.amount,
@@ -57,18 +56,18 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-// Get single purchase details
 router.get('/purchase/:id', authMiddleware, async (req, res) => {
   try {
-    const purchase = await Purchase.findOne({ 
-      _id: req.params.id, 
-      user: req.user._id 
-    }).populate('product');
-    
+    const purchase = await prisma.purchase.findFirst({
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      },
+      include: { product: true }
+    });
     if (!purchase) {
       return res.status(404).json({ success: false, message: 'Purchase not found' });
     }
-    
     res.json({ success: true, purchase });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
