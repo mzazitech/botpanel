@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const Product = require('../models/Product');
+const prisma = require('../config/db');
 
-// Get all active products
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find({ isActive: true }).sort({ price: 1 });
+    const products = await prisma.product.findMany({
+      where: { isActive: true },
+      orderBy: { price: 'asc' }
+    });
     res.json({ success: true, products });
   } catch (error) {
     console.error(error);
@@ -13,10 +15,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single product
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await prisma.product.findUnique({
+      where: { id: req.params.id }
+    });
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
