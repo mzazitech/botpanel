@@ -1,0 +1,39 @@
+<%- include('layout', { title: title, user: user }) %>
+<div class="container" style="min-height: 70vh; display: flex; align-items: center; justify-content: center;">
+  <div class="glass-card" style="padding: 40px; width: 100%; max-width: 450px;">
+    <h2 style="text-align: center; margin-bottom: 30px;">Login</h2>
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email" class="cyber-input" required style="margin-bottom: 15px;">
+      <input type="password" id="password" placeholder="Password" class="cyber-input" required style="margin-bottom: 25px;">
+      <button type="submit" class="neon-btn" style="width: 100%;">Login</button>
+    </form>
+    <p style="text-align: center; margin-top: 20px;">No account? <a href="/register" style="color: #00d4ff;">Register</a></p>
+  </div>
+</div>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    showLoading();
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.show('Login successful!');
+        setTimeout(() => window.location.href = '/dashboard', 1000);
+      } else {
+        toast.show(data.message || 'Login failed', 'error');
+      }
+    } catch (err) {
+      toast.show('Network error', 'error');
+    } finally {
+      hideLoading();
+    }
+  });
+</script>
