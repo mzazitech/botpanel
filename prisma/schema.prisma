@@ -1,52 +1,18 @@
-generator client {
-  provider = "prisma-client-js"
-}
+# Server Configuration
+PORT=3000
+NODE_ENV=production
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+# Neon PostgreSQL Database
+DATABASE_URL="postgresql://user:password@ep-cool-forest.neon.tech/dbname?sslmode=require"
 
-model User {
-  id            String    @id @default(cuid())
-  username      String    @unique
-  email         String    @unique
-  password      String
-  isAdmin       Boolean   @default(false)
-  emailVerified Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  lastLogin     DateTime?
-  preferences   Json?     // store theme etc
-  purchases     Purchase[]
-}
+# JWT Secret (change this in production)
+JWT_SECRET=your_super_secret_jwt_key_here
 
-model Product {
-  id           String   @id @default(cuid())
-  name         String
-  description  String
-  price        Int      // in KES
-  category     String   // panel, subscription, api, vps
-  features     String[] // array of strings
-  imageIcon    String?
-  type         String   // license, subscription, api_key
-  durationDays Int?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  purchases    Purchase[]
-}
+# Paystack Configuration
+PAYSTACK_SECRET_KEY=sk_test_xxxxxxxxxxxxx
+PAYSTACK_PUBLIC_KEY=pk_test_xxxxxxxxxxxxx
+PAYSTACK_CALLBACK_URL=http://localhost:3000/payment/verify
 
-model Purchase {
-  id             String   @id @default(cuid())
-  userId         String
-  productId      String
-  transactionRef String   @unique
-  amount         Int
-  status         String   // pending, completed, failed, refunded
-  apiKey         String?  @unique
-  expiryDate     DateTime?
-  paymentDetails Json?
-  deliveredAt    DateTime?
-  createdAt      DateTime @default(now())
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
+# Admin User (first run)
+ADMIN_EMAIL=admin@mzazi.com
+ADMIN_PASSWORD=Admin@123456
