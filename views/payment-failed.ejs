@@ -1,0 +1,9 @@
+<%- include('layout', { title: title, user: user }) %>
+<div class="container" style="min-height: 60vh; display: flex; align-items: center; justify-content: center; text-align: center;">
+  <div class="glass-card" style="padding: 50px;">
+    <span style="font-size: 4rem;">❌</span>
+    <h2>Payment Failed</h2>
+    <p><%= error %></p>
+    <a href="/" class="neon-btn">Back to Store</a>
+  </div>
+</div>
