@@ -1,0 +1,28 @@
+<%- include('layout', { title: title, user: user }) %>
+<div class="container" style="min-height: 60vh; display: flex; align-items: center; justify-content: center; text-align: center;">
+  <div class="glass-card" style="padding: 50px;">
+    <span style="font-size: 4rem;">✅</span>
+    <h2>Payment Successful!</h2>
+    <p>Your product has been delivered automatically.</p>
+    <% if (purchase) { %>
+      <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 15px; margin: 20px 0;">
+        <p><strong>Product:</strong> <%= purchase.product.name %></p>
+        <p><strong>Amount:</strong> KES <%= purchase.amount %></p>
+        <% if (purchase.apiKey) { %>
+          <p><strong>🔑 License Key / API Key:</strong> <code><%= purchase.apiKey %></code></p>
+          <button onclick="copyToClipboard('<%= purchase.apiKey %>')" class="neon-btn">Copy Key</button>
+        <% } %>
+      </div>
+    <% } %>
+    <div style="display: flex; gap: 15px; justify-content: center;">
+      <a href="/dashboard" class="neon-btn">Go to Dashboard</a>
+      <a href="/" class="neon-outline">Continue Shopping</a>
+    </div>
+  </div>
+</div>
+<script>
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text);
+    alert('Copied!');
+  }
+</script>
