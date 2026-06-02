@@ -2,35 +2,32 @@ const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const adminMiddleware = require('../middleware/admin');
-const User = require('../models/User');
-const Product = require('../models/Product');
-const Purchase = require('../models/Purchase');
+const prisma = require('../config/db');
 
-// Apply admin middleware to all routes
 router.use(authMiddleware, adminMiddleware);
 
-// Dashboard statistics
 router.get('/stats', async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalProducts = await Product.countDocuments();
-    const totalSales = await Purchase.aggregate([
-      { $match: { status: 'completed' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-    const totalPurchases = await Purchase.countDocuments({ status: 'completed' });
-    const recentPurchases = await Purchase.find({ status: 'completed' })
-      .populate('user', 'username email')
-      .populate('product', 'name')
-      .sort({ createdAt: -1 })
-      .limit(10);
-    
+    const totalUsers = await prisma.user.count();
+    const totalProducts = await prisma.product.count();
+    const salesAgg = await prisma.purchase.aggregate({
+      where: { status: 'completed' },
+      _sum: { amount: true }
+    });
+    const totalPurchases = await prisma.purchase.count({ where: { status: 'completed' } });
+    const recentPurchases = await prisma.purchase.findMany({
+      where: { status: 'completed' },
+      include: { user: { select: { username: true, email: true } }, product: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    });
+
     res.json({
       success: true,
       stats: {
         totalUsers,
         totalProducts,
-        totalSales: totalSales[0]?.total || 0,
+        totalSales: salesAgg._sum.amount || 0,
         totalPurchases
       },
       recentPurchases
@@ -41,113 +38,91 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// Get all users
 router.get('/users', async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    const users = await prisma.user.findMany({
+      select: { id: true, username: true, email: true, isAdmin: true, createdAt: true },
+      orderBy: { createdAt: 'desc' }
+    });
     res.json({ success: true, users });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Delete user
 router.delete('/users/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    
-    // Delete all purchases of this user
-    await Purchase.deleteMany({ user: user._id });
-    await User.findByIdAndDelete(user._id);
-    
-    res.json({ success: true, message: 'User deleted successfully' });
+    await prisma.purchase.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: user.id } });
+    res.json({ success: true, message: 'User deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Get all products
 router.get('/products', async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const products = await prisma.product.findMany({ orderBy: { createdAt: 'desc' } });
     res.json({ success: true, products });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Update product
 router.put('/products/:id', async (req, res) => {
   try {
     const { name, description, price, features, isActive } = req.body;
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { name, description, price, features, isActive },
-      { new: true, runValidators: true }
-    );
-    
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-    
+    const product = await prisma.product.update({
+      where: { id: req.params.id },
+      data: { name, description, price, features, isActive }
+    });
     res.json({ success: true, product });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Create product
 router.post('/products', async (req, res) => {
   try {
-    const product = new Product(req.body);
-    await product.save();
+    const product = await prisma.product.create({ data: req.body });
     res.status(201).json({ success: true, product });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Delete product
 router.delete('/products/:id', async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
+    await prisma.product.delete({ where: { id: req.params.id } });
     res.json({ success: true, message: 'Product deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Get all payments (purchases)
 router.get('/payments', async (req, res) => {
   try {
-    const payments = await Purchase.find()
-      .populate('user', 'username email')
-      .populate('product', 'name price')
-      .sort({ createdAt: -1 });
+    const payments = await prisma.purchase.findMany({
+      include: { user: { select: { username: true, email: true } }, product: { select: { name: true, price: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
     res.json({ success: true, payments });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Update payment status
 router.patch('/payments/:id', async (req, res) => {
   try {
     const { status } = req.body;
-    const payment = await Purchase.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    if (!payment) {
-      return res.status(404).json({ success: false, message: 'Payment not found' });
-    }
+    const payment = await prisma.purchase.update({
+      where: { id: req.params.id },
+      data: { status }
+    });
     res.json({ success: true, payment });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
