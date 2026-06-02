@@ -1,0 +1,19 @@
+<%- include('layout', { title: title, user: user }) %>
+<div class="container" style="padding: 2rem 0;">
+  <h1>Welcome, <span id="dashboardUsername"><%= user.username %></span>!</h1>
+  <div class="dashboard-stats" id="dashboardStats">
+    <div class="stat-card"><div class="stat-value" id="totalPurchases">0</div><div>Purchases</div></div>
+    <div class="stat-card"><div class="stat-value" id="activeProducts">0</div><div>Active Products</div></div>
+    <div class="stat-card"><div class="stat-value" id="totalSpent">KES 0</div><div>Total Spent</div></div>
+  </div>
+  
+  <div style="margin-top: 2rem;">
+    <h2>📦 My Purchases</h2>
+    <div id="purchasesList"></div>
+  </div>
+  
+  <div style="margin-top: 2rem;">
+    <h2>🔑 API Keys & Licenses</h2>
+    <div id="apiKeysList"></div>
+  </div>
+</div>
