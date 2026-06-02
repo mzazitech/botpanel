@@ -1,11 +1,9 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const prisma = require('../config/db');
 
 const authMiddleware = async (req, res, next) => {
   try {
-    // Get token from cookie or Authorization header
     let token = req.cookies.token;
-    
     if (!token && req.headers.authorization) {
       token = req.headers.authorization.replace('Bearer ', '');
     }
@@ -15,8 +13,11 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-password');
-    
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, username: true, email: true, isAdmin: true, createdAt: true }
+    });
+
     if (!user) {
       return res.status(401).json({ success: false, message: 'User not found' });
     }
@@ -39,7 +40,10 @@ const optionalAuth = async (req, res, next) => {
     let token = req.cookies.token;
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.userId).select('-password');
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: { id: true, username: true, email: true, isAdmin: true }
+      });
       if (user) req.user = user;
     }
     next();
